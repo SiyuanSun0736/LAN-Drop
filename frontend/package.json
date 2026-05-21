@@ -2,6 +2,9 @@
   "name": "landrop-ui",
   "version": "0.1.0",
   "private": true,
+  "description": "Encrypted LAN file transfer desktop client",
+  "author": "SiyuanSun0736",
+  "homepage": "https://github.com/SiyuanSun0736/LAN-Drop",
   "type": "module",
   "main": "out/main/index.js",
   "scripts": {
@@ -12,7 +15,9 @@
     "pack:dir": "electron-builder --dir",
     "dist:portable": "electron-builder --win portable",
     "dist:installer": "electron-builder --win nsis",
-    "dist:win": "electron-builder --win nsis portable"
+    "dist:win": "electron-builder --win nsis portable",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:linux:appimage": "electron-builder --linux AppImage"
   },
   "dependencies": {
     "react": "^19.0.0",
@@ -57,6 +62,26 @@
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "category": "Utility",
+      "maintainer": "SiyuanSun0736",
+      "executableName": "landrop",
+      "artifactName": "LAN-Drop-${version}-${arch}.${ext}",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     }
   }
 }
