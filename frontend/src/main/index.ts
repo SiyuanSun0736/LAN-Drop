@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, type OpenDialogOptions } from 'electron'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
@@ -130,6 +130,16 @@ function broadcastBackendState(state: BackendState): void {
   mainWindow?.webContents.send(BACKEND_CHANNEL, state)
 }
 
+function resolvePreloadPath(): string {
+  const candidates = [
+    join(__dirname, '../preload/index.mjs'),
+    join(__dirname, '../preload/index.js')
+  ]
+
+  const match = candidates.find((candidate) => existsSync(candidate))
+  return match ?? candidates[0]
+}
+
 function createWindow(): void {
   const rendererURL = process.env.ELECTRON_RENDERER_URL ?? process.env.VITE_DEV_SERVER_URL
 
@@ -141,7 +151,8 @@ function createWindow(): void {
     titleBarStyle: 'hiddenInset',
     backgroundColor: '#0e1b18',
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js')
+      sandbox: false,
+      preload: resolvePreloadPath()
     }
   })
 
@@ -160,6 +171,19 @@ app.whenReady().then(async () => {
   coreManager = new CoreProcessManager(broadcastBackendState)
 
   ipcMain.handle('backend:get-state', () => coreManager?.getState() ?? { status: 'idle' })
+  ipcMain.handle('files:pick', async () => {
+    const options: OpenDialogOptions = {
+      title: '选择要发送的文件',
+      buttonLabel: '加入发送队列',
+      properties: ['openFile', 'multiSelections']
+    }
+
+    const response = mainWindow
+      ? await dialog.showOpenDialog(mainWindow, options)
+      : await dialog.showOpenDialog(options)
+
+    return response.canceled ? [] : response.filePaths
+  })
 
   createWindow()
   await coreManager.start()

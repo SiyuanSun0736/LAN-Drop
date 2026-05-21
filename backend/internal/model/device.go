@@ -8,6 +8,7 @@ type Device struct {
 	OS       string    `json:"os"`
 	Address  string    `json:"address"`
 	Port     int       `json:"port"`
+	Fingerprint string `json:"fingerprint,omitempty"`
 	Protocol string    `json:"protocol"`
 	Version  string    `json:"version"`
 	LastSeen time.Time `json:"lastSeen"`

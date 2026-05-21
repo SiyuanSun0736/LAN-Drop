@@ -3,9 +3,11 @@ package selfsigned
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/hex"
 	"encoding/pem"
 	"math/big"
 	"net"
@@ -46,4 +48,17 @@ func GenerateServerCertificate(commonName string) (tls.Certificate, error) {
 	privateKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
 
 	return tls.X509KeyPair(certificatePEM, privateKeyPEM)
+}
+
+func FingerprintCertificate(certificate tls.Certificate) string {
+	if len(certificate.Certificate) == 0 {
+		return ""
+	}
+
+	return FingerprintDER(certificate.Certificate[0])
+}
+
+func FingerprintDER(raw []byte) string {
+	sum := sha256.Sum256(raw)
+	return hex.EncodeToString(sum[:])
 }

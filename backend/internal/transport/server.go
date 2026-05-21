@@ -15,7 +15,9 @@ import (
 type Server struct {
 	config      config.Config
 	certificate tls.Certificate
+	fingerprint string
 	listener    net.Listener
+	handler     func(context.Context, net.Conn)
 }
 
 type Hello struct {
@@ -24,6 +26,7 @@ type Hello struct {
 	OS         string `json:"os"`
 	Protocol   string `json:"protocol"`
 	Version    string `json:"version"`
+	Fingerprint string `json:"fingerprint,omitempty"`
 	Status     string `json:"status"`
 }
 
@@ -36,6 +39,7 @@ func New(cfg config.Config) (*Server, error) {
 	return &Server{
 		config:      cfg,
 		certificate: certificate,
+		fingerprint: selfsigned.FingerprintCertificate(certificate),
 	}, nil
 }
 
@@ -73,6 +77,14 @@ func (s *Server) Port() int {
 	return 0
 }
 
+func (s *Server) Fingerprint() string {
+	return s.fingerprint
+}
+
+func (s *Server) SetHandler(handler func(context.Context, net.Conn)) {
+	s.handler = handler
+}
+
 func (s *Server) acceptLoop(ctx context.Context) {
 	for {
 		conn, err := s.listener.Accept()
@@ -81,6 +93,11 @@ func (s *Server) acceptLoop(ctx context.Context) {
 				return
 			}
 
+			continue
+		}
+
+		if s.handler != nil {
+			go s.handler(ctx, conn)
 			continue
 		}
 
@@ -98,6 +115,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 		OS:         s.config.DeviceOS,
 		Protocol:   s.config.ProtocolName,
 		Version:    s.config.Version,
+		Fingerprint: s.fingerprint,
 		Status:     "ready",
 	})
 	if err != nil {

@@ -14,14 +14,16 @@ import (
 type Service struct {
 	config   config.Config
 	port     int
+	fingerprint string
 	onDevice func(device model.Device)
 	server   *zeroconf.Server
 }
 
-func New(cfg config.Config, port int, onDevice func(device model.Device)) *Service {
+func New(cfg config.Config, port int, fingerprint string, onDevice func(device model.Device)) *Service {
 	return &Service{
 		config:   cfg,
 		port:     port,
+		fingerprint: fingerprint,
 		onDevice: onDevice,
 	}
 }
@@ -36,6 +38,7 @@ func (s *Service) Start(ctx context.Context) error {
 			fmt.Sprintf("id=%s", s.config.DeviceID),
 			fmt.Sprintf("name=%s", s.config.DeviceName),
 			fmt.Sprintf("os=%s", s.config.DeviceOS),
+			fmt.Sprintf("fingerprint=%s", s.fingerprint),
 			fmt.Sprintf("protocol=%s", s.config.ProtocolName),
 			fmt.Sprintf("version=%s", s.config.Version),
 		},
@@ -126,6 +129,7 @@ func (s *Service) toDevice(entry *zeroconf.ServiceEntry) (model.Device, bool) {
 		OS:       records["os"],
 		Address:  address,
 		Port:     entry.Port,
+		Fingerprint: records["fingerprint"],
 		Protocol: records["protocol"],
 		Version:  records["version"],
 		LastSeen: time.Now().UTC(),

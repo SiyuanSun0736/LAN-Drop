@@ -48,3 +48,11 @@ func (r *DeviceRegistry) List() []model.Device {
 
 	return devices
 }
+
+func (r *DeviceRegistry) Get(id string) (model.Device, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	device, ok := r.devices[id]
+	return device, ok
+}

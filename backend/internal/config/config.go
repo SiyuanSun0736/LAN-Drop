@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -17,6 +18,8 @@ type Config struct {
 	ServiceDomain string
 	IPCBind       string
 	TransferBind  string
+	ReceiveDir    string
+	ChunkSize     int
 	ProtocolName  string
 	Version       string
 }
@@ -35,6 +38,8 @@ func Load() Config {
 		ServiceDomain: getenv("LANDROP_SERVICE_DOMAIN", "local."),
 		IPCBind:       getenv("LANDROP_IPC_BIND", "127.0.0.1:0"),
 		TransferBind:  getenv("LANDROP_TRANSFER_BIND", "0.0.0.0:0"),
+		ReceiveDir:    getenv("LANDROP_RECEIVE_DIR", defaultReceiveDir()),
+		ChunkSize:     envInt("LANDROP_CHUNK_SIZE", 1<<20),
 		ProtocolName:  getenv("LANDROP_PROTOCOL", "landrop/0"),
 		Version:       getenv("LANDROP_VERSION", "0.1.0"),
 	}
@@ -58,7 +63,7 @@ func randomID() string {
 	return hex.EncodeToString(buf)
 }
 
-func Int(key string, fallback int) int {
+func envInt(key string, fallback int) int {
 	value := strings.TrimSpace(os.Getenv(key))
 	if value == "" {
 		return fallback
@@ -70,4 +75,13 @@ func Int(key string, fallback int) int {
 	}
 
 	return parsed
+}
+
+func defaultReceiveDir() string {
+	home, err := os.UserHomeDir()
+	if err == nil && strings.TrimSpace(home) != "" {
+		return filepath.Join(home, "Downloads", "LAN-Drop")
+	}
+
+	return filepath.Join(os.TempDir(), "LAN-Drop")
 }

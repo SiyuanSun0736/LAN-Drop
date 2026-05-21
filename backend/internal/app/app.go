@@ -26,12 +26,13 @@ type App struct {
 func New(cfg config.Config) (*App, error) {
 	hub := ipc.NewHub()
 	devices := store.NewDeviceRegistry()
-	transfers := transfer.NewManager(hub)
+	transfers := transfer.NewManager(cfg, devices, hub)
 	ipcServer := ipc.NewServer(cfg, devices, hub, transfers)
 	transportServer, err := transport.New(cfg)
 	if err != nil {
 		return nil, err
 	}
+	transportServer.SetHandler(transfers.HandleIncoming)
 
 	return &App{
 		config:    cfg,
@@ -54,7 +55,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	fmt.Printf("IPC listening on %s\n", a.ipcServer.Address())
 
-	discoveryService := discovery.New(a.config, a.transport.Port(), func(device model.Device) {
+	discoveryService := discovery.New(a.config, a.transport.Port(), a.transport.Fingerprint(), func(device model.Device) {
 		stored := a.devices.Upsert(device)
 		a.hub.Broadcast(events.New("device.upserted", stored))
 	})

@@ -8,7 +8,11 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "pack:dir": "electron-builder --dir",
+    "dist:portable": "electron-builder --win portable",
+    "dist:installer": "electron-builder --win nsis",
+    "dist:win": "electron-builder --win nsis portable"
   },
   "dependencies": {
     "react": "^19.0.0",
@@ -19,9 +23,40 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "electron": "^35.0.0",
+    "electron": "^35.7.5",
+    "electron-builder": "^25.1.8",
     "electron-vite": "^3.0.0",
     "typescript": "^5.8.0",
     "vite": "^6.0.0"
+  },
+  "build": {
+    "appId": "io.landrop.desktop",
+    "productName": "LAN-Drop",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/backend",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "asar": true,
+    "portable": {
+      "artifactName": "LAN-Drop-${version}-portable-${arch}.${ext}"
+    },
+    "nsis": {
+      "artifactName": "LAN-Drop-${version}-setup-${arch}.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
